@@ -1,0 +1,8 @@
+# installment(except last), % of total
+# last installment = remaining total
+#
+# Assuming no input error, no missing column, sum of percentages always <100
+#
+1, 10
+2, 25
+3, 60

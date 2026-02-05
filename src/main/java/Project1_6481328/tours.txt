@@ -1,0 +1,21 @@
+# tour(GT = group tour),      rate1(15-20),  rate2(21-30),  rate3(>=31), single supplement
+#
+#    rate1, rate2, rate3 = price/person if group size = 15-20, 21-30, >= 31, respectively
+#    single supplement   = extra payment if a person requests a single room
+#
+# tour(HP = holiday package), rate1(single), rate2(double)
+#
+#    rate1 = price/person for 1 plane ticket  + 1 single room
+#    rate2 = price/person for 2 plane tickets + 1 double room, i.e. you pay rate2*2
+#
+# All prices already include service charge + VAT
+# Assuming no input error, no missing column, no duplicate code
+#
+GT1, 36000, 35500, 33000,  8000
+GT2, 68000, 67000, 65000, 12000
+GT3, 20500, 20000, 19000,  5000
+GT4, 84000, 82000, 79500, 15000
+HP1, 45500, 42000
+HP2, 33000, 30500
+HP3, 72000, 68000
+HP4, 15000, 13500
