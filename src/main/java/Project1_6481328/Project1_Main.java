@@ -14,5 +14,9 @@ public class Project1_Main {
 
         System.out.println("===== Booking Processing =====");
         PaymentCalculator.bookingCalculation(bookings, allTours, installments);
+
+//        TODO: formatting
+//        TODO: error exception
+//        TODO: review the output
     }
 }

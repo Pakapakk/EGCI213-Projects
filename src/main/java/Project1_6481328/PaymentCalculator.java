@@ -33,7 +33,6 @@ public class PaymentCalculator {
             Tour tour = tourByCode.get(booking.getTourCode());
             if (tour == null) continue;
 
-            // customer fetch/create
             Customer cust = customers.get(booking.getCustomerId());
 //            boolean firstBooking = false;
             if (cust == null) {
