@@ -33,7 +33,7 @@ public class Helper {
                     rows.add(new InputHandler(cols, line));
                 }
             } catch (FileNotFoundException e) {
-                System.err.println(e + " (The system cannot find the specified file) \nEnter the correct file name = ");
+                System.err.println("\n" + e + " (The system cannot find the specified file) \nEnter the correct file name = ");
                 filename = keyboardScanner.next();
             }
         }
@@ -82,7 +82,7 @@ public class Helper {
     }
 
     public static ArrayList<Booking> readBookings() {
-        ArrayList<InputHandler> lines = readFile("bookings_errors.txt");
+        ArrayList<InputHandler> lines = readFile("bookings.txt");
         ArrayList<Booking> list = new ArrayList<>();
 
         for (InputHandler line : lines) {
