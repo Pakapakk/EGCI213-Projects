@@ -2,6 +2,13 @@ package Project1_6481328;
 
 import java.util.ArrayList;
 
+/*
+    Pakapak Jungjaroen 6481328
+    Tanadol Chuntarasupt 6481259
+    Name
+    Name
+*/
+
 public class Project1_Main {
     public static void main(String[] args) {
         ArrayList<Tour> allTours = Helper.readTours();
@@ -15,8 +22,5 @@ public class Project1_Main {
         System.out.println("===== Booking Processing =====");
         PaymentCalculator.bookingCalculation(bookings, allTours, installments);
 
-//        TODO: formatting
-//        TODO: error exception
-//        TODO: review the output
     }
 }

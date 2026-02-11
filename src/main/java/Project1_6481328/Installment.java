@@ -17,6 +17,6 @@ public class Installment {
     }
 
     public void print() {
-        System.out.printf("(%d) %.1f %% of total%n", this.order, this.percent);
+        System.out.printf("  (%d)  %.1f %% of total%n", this.order, this.percent);
     }
 }

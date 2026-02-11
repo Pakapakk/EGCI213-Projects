@@ -3,6 +3,10 @@ package Project1_6481328;
 import java.io.*;
 import java.util.*;
 
+class InvalidInputException extends Exception{
+    public InvalidInputException(String message){super(message);}
+}
+
 public class Helper {
     private static final String PATH = "src/main/java/Project1_6481328/";
 
@@ -33,7 +37,7 @@ public class Helper {
                     rows.add(new InputHandler(cols, line));
                 }
             } catch (FileNotFoundException e) {
-                System.err.println("\n" + e + " (The system cannot find the specified file) \nEnter the correct file name = ");
+                System.out.println("\n" + e + " (The system cannot find the specified file) \nEnter the correct file name = ");
                 filename = keyboardScanner.next();
             }
         }
@@ -43,6 +47,7 @@ public class Helper {
 
     public static ArrayList<Tour> readTours() {
         ArrayList<InputHandler> lines = readFile("tours.txt");
+        //ArrayList<InputHandler> lines = readFile("tour.txt");
         ArrayList<Tour> tours = new ArrayList<>();
 
         for (InputHandler line : lines) {
@@ -72,6 +77,7 @@ public class Helper {
 
     public static ArrayList<Installment> readInstallments() {
         ArrayList<InputHandler> lines = readFile("installments.txt");
+        //ArrayList<InputHandler> lines = readFile("installment.txt");
         ArrayList<Installment> list = new ArrayList<>();
 
         for (InputHandler line : lines) {
@@ -83,22 +89,34 @@ public class Helper {
 
     public static ArrayList<Booking> readBookings() {
         ArrayList<InputHandler> lines = readFile("bookings.txt");
+        //ArrayList<InputHandler> lines = readFile("booking.txt");
         ArrayList<Booking> list = new ArrayList<>();
 
         for (InputHandler line : lines) {
             if (line.isComment()) continue;
 
             String[] c = line.getArgumentsString();
+            List<String> validCodes = List.of("GT1", "GT2", "GT3", "GT4", "HP1", "HP2", "HP3", "HP4");
             try {
-                if (c.length < 5) throw new ArrayIndexOutOfBoundsException();
+
+                if(!validCodes.contains(c[2])){
+                    throw new InvalidInputException("For tour code \"" + c[2] + "\"");
+                }
+
+                if (c.length < 5){
+                    throw new ArrayIndexOutOfBoundsException("Index 4 out of bounds for length " + c.length);
+                }
+
+                int amount = Integer.parseInt(c[4]); //Integer.parseInt automatically throw NumberFormatExceptoin if not int (1.9 or ABC)
+                if (amount < 0) {
+                    throw new InvalidInputException("For amount in col5: \"" + amount + "\"");
+                }
+
                 Booking b = new Booking(c);
-
-                if (!(b.isGroupTour() || b.isHolidayPackage()))
-                    throw new IllegalArgumentException("invalid tour code");
-
                 list.add(b);
             } catch (Exception e) {
-                System.out.printf("[%s] --> skip this booking%n", line.getOriginalInput());
+                System.out.println(e);
+                System.out.printf("%-30s%20s\n\n", line.getOriginalInput(), "--> skip this booking");
             }
         }
         return list;
@@ -109,6 +127,6 @@ public class Helper {
 
         Installment.printHeader(totalInstallments);
         for (Installment ins : installments) ins.print();
-        System.out.printf("(%d) remaining total%n", totalInstallments);
+        System.out.printf("  (%d)  remaining total%n", totalInstallments);
     }
 }

@@ -29,6 +29,14 @@ public class PaymentCalculator {
         Map<String, TourSummary> gtSummary = new HashMap<>();
         Map<String, TourSummary> hpSummary = new HashMap<>();
 
+        // pre-fill gt and hp so that summary will print empty list if no bookings as well
+        for (String code : new String[]{"GT1", "GT2", "GT3", "GT4"}) {
+            gtSummary.put(code, new TourSummary(code));
+        }
+        for (String code : new String[]{"HP1", "HP2", "HP3", "HP4"}) {
+            hpSummary.put(code, new TourSummary(code));
+        }
+
         for (Booking booking : bookings) {
             Tour tour = tourByCode.get(booking.getTourCode());
             if (tour == null) continue;
@@ -71,8 +79,8 @@ public class PaymentCalculator {
                 int doubleRooms = (persons - single) / 2;
 
                 System.out.printf(
-                        "    program %s, %d persons (%d single + %d double rooms)%n",
-                        booking.getTourCode(), persons, single, doubleRooms
+                        "%10s program %s, %d persons (%d single + %d double rooms)%n",
+                        "",booking.getTourCode(), persons, single, doubleRooms
                 );
 
             } else {
@@ -82,39 +90,43 @@ public class PaymentCalculator {
                 int persons = singleRooms + 2 * doubleRooms;
 
                 System.out.printf(
-                        "    program %s, %d persons (%d single + %d double rooms)%n",
-                        booking.getTourCode(), persons, singleRooms, doubleRooms
+                        "%10s program %s, %d persons (%d single + %d double rooms)%n",
+                        "",booking.getTourCode(), persons, singleRooms, doubleRooms
                 );
             }
 
 
             System.out.printf(
-                    "    total payment     = %,.2f   future cashback ( %,.2f )%n",
-                    (double) total,
-                    futureCashback
+                    "%10s total payment %4s= %,15.2f   future  cashback (%,10.2f)%n",
+                    "","",(double) total, futureCashback
             );
 
             for (int i = 0; i < pays.length; i++) {
                 if (i < lastIdx) {
-                    System.out.printf("        installment %d  = %,.2f%n", i + 1, (double) pays[i]);
+                    System.out.printf("%12s installment %d   = %,15.2f%n",
+                            "", i + 1, (double) pays[i]);
                 } else {
-                    System.out.printf(
-                            "        installment %d  = %,.2f   -current cashback ( %,.2f ) = %,.2f%n",
-                            i + 1, lastBefore, currentCashback, lastAfter
+                    System.out.printf("%12s installment %d   = %,15.2f  -current cashback (%,10.2f) = %,13.2f%n",
+                            "", i + 1, lastBefore, currentCashback, lastAfter
                     );
                 }
             }
             System.out.println();
 
-            int travelers = booking.getN1();
+            int travelers;
+            if (booking.isGroupTour()){
+                travelers = booking.getN1(); //for gt n1 is just the total num of people
+            }else{
+                travelers = booking.getN1() + (2* booking.getN2()); //for hp n1 = single rooms, n2 = double rooms (so multiply by 2)
+            }
 
-            Map<String, TourSummary> target = booking.isGroupTour() ? gtSummary : hpSummary;
+            Map<String, TourSummary> target = booking.isGroupTour() ? gtSummary : hpSummary; //if booking is gt, map to gt, else to hp
             TourSummary ts = target.get(booking.getTourCode());
-            if (ts == null) {
-                ts = new TourSummary(booking.getTourCode());
+            if (ts == null) { //if first time seeing this tour code (but since we prefilled, this is kinda useless :p)
+                ts = new TourSummary(booking.getTourCode()); //create new TourSummary obj and adds it to the map so we can find again for next booking
                 target.put(booking.getTourCode(), ts);
             }
-            ts.addBooking(booking.getBookingId(), travelers, total);
+            ts.addBooking(booking.getBookingId(), travelers, total); //send data to TourSummary class to update the total
         }
 
         // ----- PRINT SUMMARIES -----

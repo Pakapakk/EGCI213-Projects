@@ -39,8 +39,24 @@ public class TourSummary implements Comparable<TourSummary> {
 
     public void print() {
         System.out.printf(
-                "%-4s  total travelers = %4d   total revenue = %,12.2f   bookings = %s%n",
-                this.tourCode, this.totalTravelers, (double) this.totalRevenue, this.bookingIds
+                "%-4s    total travelers = %5d   total revenue = %,14.2f   bookings = %s%n",
+                this.tourCode, this.totalTravelers, (double) this.totalRevenue, formatBookingIds()
         );
+    }
+
+    private String formatBookingIds() {
+        if (bookingIds.isEmpty()) return "[]";
+
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < bookingIds.size(); i++) {
+            sb.append(String.format("%-3s", bookingIds.get(i)));
+            if (i < bookingIds.size() - 1) {
+                sb.append(" , ");
+            } else {
+                sb.append(" ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }
