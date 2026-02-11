@@ -3,10 +3,10 @@ package Project1_6481328;
 import java.util.ArrayList;
 
 /*
-    Pakapak Jungjaroen 6481328
-    Tanadol Chuntarasupt 6481259
-    Name
-    Name
+    Pakapak Jungjaroen      6481328
+    Tanadol Chuntarasupt    6481259
+    Steven Jonatan          6881006
+    Jimin Kim               6680046
 */
 
 public class Project1_Main {
