@@ -1,6 +1,6 @@
 package Project1_6481328;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /*
     Pakapak Jungjaroen      6481328
@@ -8,6 +8,8 @@ import java.util.ArrayList;
     Steven Jonatan          6881006
     Jimin Kim               6680046
 */
+
+// reading input for each file in Helper.java
 
 public class Project1_Main {
     public static void main(String[] args) {

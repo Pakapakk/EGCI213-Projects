@@ -5,7 +5,9 @@ public abstract class Tour {
 
     public String getCode() { return code; }
     public abstract long calculateTotal(Booking booking);
+    public abstract BookingInfo buildInfo(Booking booking);
     public abstract void print();
+
 }
 
 class GroupTour extends Tour {
@@ -28,16 +30,29 @@ class GroupTour extends Tour {
     }
 
     @Override
-    public long calculateTotal(Booking GroupTourBooking) {
+    public long calculateTotal(Booking b) {
+        return buildInfo(b).totalPayment;
+    }
+
+    @Override
+    public BookingInfo buildInfo(Booking GroupTourBooking) {
         int persons = GroupTourBooking.getN1();
-        int singleRequest = GroupTourBooking.getN2();
-        int rates;
+        int single = GroupTourBooking.getN2();
+        int remaining = persons - single;
 
-        if(persons >= 15 && persons <= 20)  rates = rate15_20;
-        else if(persons >= 21 && persons <= 30)              rates = rate21_30;
-        else                                rates = rate31plus;
+        int doubleRooms;
+        if (remaining <= 0)         doubleRooms = 0;
+        else if (remaining == 1)    doubleRooms = 1;
+        else                        doubleRooms = remaining / 2;
 
-        return (long) persons * rates + (long) singleRequest * singleSupplement;
+        int rate;
+        if (persons >= 15 && persons <= 20)      rate = rate15_20;
+        else if (persons >= 21 && persons <= 30) rate = rate21_30;
+        else                                     rate = rate31plus;
+
+        long total = (long) persons * rate + (long) single * singleSupplement;
+
+        return new BookingInfo(persons, single, doubleRooms, total);
     }
 
     @Override
@@ -64,13 +79,19 @@ class HolidayPackage extends Tour {
     }
 
     @Override
-    public long calculateTotal(Booking HolidayPackageBooking) {
-        int singlePersons = HolidayPackageBooking.getN1();
+    public long calculateTotal(Booking b) {
+        return buildInfo(b).totalPayment;
+    }
+
+    @Override
+    public BookingInfo buildInfo(Booking HolidayPackageBooking) {
+        int singleRooms = HolidayPackageBooking.getN1();
         int doubleRooms = HolidayPackageBooking.getN2();
+        int persons = singleRooms + 2 * doubleRooms;
 
-        long total = (long) singlePersons * singleRate + (long) (doubleRooms * 2) * doubleRate;
+        long total = (long) singleRooms * singleRate + (long) doubleRooms * 2L * doubleRate;
 
-        return total;
+        return new BookingInfo(persons, singleRooms, doubleRooms, total);
     }
 
     @Override

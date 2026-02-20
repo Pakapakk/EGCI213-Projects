@@ -22,8 +22,8 @@ public class Booking {
     public boolean isGroupTour()        { return tourCode.startsWith("GT"); }
     public boolean isHolidayPackage()   { return tourCode.startsWith("HP"); }
 
-    public static int getTotalInstallments()            { return totalInstallments; }
-    public static void setTotalInstallments(int total)  { totalInstallments = total; }
+//    public static int getTotalInstallments()            { return totalInstallments; }
+//    public static void setTotalInstallments(int total)  { totalInstallments = total; }
 
     public void print() {
         System.out.printf("%s, %s, %s, %d, %d",
