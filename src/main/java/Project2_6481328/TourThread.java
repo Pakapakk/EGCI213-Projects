@@ -37,12 +37,12 @@ public class TourThread extends Thread {
     private Random random = new Random();
 
     public TourThread(String name, int days, int minArrival, int maxArrival,
-            ArrayList<CityLimo> cityLimos, ArrayList<AirportLimo> airportLimos,
-            ArrayList<GuideThread> guideThreads,
-            CyclicBarrier dayStartBarrier, CyclicBarrier outboundReportBarrier,
-            CyclicBarrier afterOutboundBarrier, CyclicBarrier inboundArrivalBarrier,
-            CyclicBarrier inboundLimoBarrier, CyclicBarrier guideAssignDoneBarrier,
-            CyclicBarrier dayEndBarrier, int padWidth) {
+                      ArrayList<CityLimo> cityLimos, ArrayList<AirportLimo> airportLimos,
+                      ArrayList<GuideThread> guideThreads,
+                      CyclicBarrier dayStartBarrier, CyclicBarrier outboundReportBarrier,
+                      CyclicBarrier afterOutboundBarrier, CyclicBarrier inboundArrivalBarrier,
+                      CyclicBarrier inboundLimoBarrier, CyclicBarrier guideAssignDoneBarrier,
+                      CyclicBarrier dayEndBarrier, int padWidth) {
         super(name);
         this.days = days;
         this.minArrival = minArrival;
@@ -64,18 +64,31 @@ public class TourThread extends Thread {
         return String.format("%" + padWidth + "s >> ", Thread.currentThread().getName());
     }
 
+    public static int awaitBarrier(CyclicBarrier barrier) {
+        try {
+            return barrier.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (BrokenBarrierException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void run() {
         for (int day = 1; day <= days; day++) {
             try {
                 // Wait for main function to print day header and reset limos
-                dayStartBarrier.await();
+                awaitBarrier(dayStartBarrier);
 
                 // If even day, process outbound customers
                 if (day % 2 == 0) {
                     // Report outbound customers
-                    System.out.println(prefix() + "outbound customers = " + outboundCustomers);
-                    outboundReportBarrier.await();
+                    synchronized (Main.PRINT_LOCK) {
+                        System.out.println(prefix() + "outbound customers = " + outboundCustomers);
+                    }
+                    awaitBarrier(outboundReportBarrier);
 
                     // Random 1 AirportLimo, book customers
                     AirportLimo limo = airportLimos.get(random.nextInt(airportLimos.size()));
@@ -86,10 +99,12 @@ public class TourThread extends Thread {
                         remaining = limo.getRemainingSeats();
                     }
                     int metro = outboundCustomers - booked;
-                    System.out.printf("%sput %4d customers on %s\tremaining seats = %5d\n",
-                            prefix(), booked, limo.getName(), remaining);
-                    if (metro > 0) {
-                        System.out.printf("%sput %4d customers on metro\n", prefix(), metro);
+                    synchronized (Main.PRINT_LOCK) {
+                        System.out.printf("%sput %4d customers on %s\tremaining seats = %5d%n",
+                                prefix(), booked, limo.getName(), remaining);
+                        if (metro > 0) {
+                            System.out.printf("%sput %4d customers on metro%n", prefix(), metro);
+                        }
                     }
 
                     // Reset outbound customers
@@ -97,17 +112,21 @@ public class TourThread extends Thread {
                 }
 
                 // Wait for all TourThreads to complete outbound
-                afterOutboundBarrier.await();
+                int afterOutbound = awaitBarrier(afterOutboundBarrier);
 
                 // Print blank separator on even days between outbound and inbound
-                if (day % 2 == 0) {
-                    System.out.println(prefix());
+                if (day % 2 == 0 && afterOutbound == afterOutboundBarrier.getParties() - 1) {
+                    synchronized (Main.PRINT_LOCK) {
+                        System.out.println(prefix());
+                    }
                 }
 
                 // Random inbound arrival
                 inboundCustomers = random.nextInt(maxArrival - minArrival + 1) + minArrival;
-                System.out.println(prefix() + "inbound  customers = " + inboundCustomers);
-                inboundArrivalBarrier.await();
+                synchronized (Main.PRINT_LOCK) {
+                    System.out.println(prefix() + "inbound  customers = " + inboundCustomers);
+                }
+                awaitBarrier(inboundArrivalBarrier);
 
                 // Random 1 CityLimo, book customers
                 CityLimo cityLimo = cityLimos.get(random.nextInt(cityLimos.size()));
@@ -118,33 +137,42 @@ public class TourThread extends Thread {
                     remaining = cityLimo.getRemainingSeats();
                 }
                 int metro = inboundCustomers - booked;
-                System.out.printf("%sput %4d customers on %s \t\t remaining seats = %5d\n",
-                        prefix(), booked, cityLimo.getName(), remaining);
-                if (metro > 0) {
-                    System.out.printf("%sput %4d customers on metro\n", prefix(), metro);
+                synchronized (Main.PRINT_LOCK) {
+                    System.out.printf("%sput %4d customers on %s \t\t remaining seats = %5d%n",
+                            prefix(), booked, cityLimo.getName(), remaining);
+                    if (metro > 0) {
+                        System.out.printf("%sput %4d customers on metro%n", prefix(), metro);
+                    }
                 }
-                inboundLimoBarrier.await();
+                awaitBarrier(inboundLimoBarrier);
 
                 // Random 1 local guide and send customers
                 GuideThread guide = guideThreads.get(random.nextInt(guideThreads.size()));
                 guide.receiveCustomers(inboundCustomers);
-                System.out.printf("%ssend %3d customers to %s\n",
-                        prefix(), inboundCustomers, guide.getName());
+                synchronized (Main.PRINT_LOCK) {
+                    System.out.printf("%ssend %3d customers to %s%n",
+                            prefix(), inboundCustomers, guide.getName());
+                }
 
                 // Add inbound to outbound for next even day
                 outboundCustomers += inboundCustomers;
 
                 // Signal guides that assignment is done
-                guideAssignDoneBarrier.await();
+                int guideAssigned = awaitBarrier(guideAssignDoneBarrier);
 
                 // Blank line separator
-                System.out.println(prefix());
+                if (guideAssigned == guideAssignDoneBarrier.getParties() - 1) {
+                    synchronized (Main.PRINT_LOCK) {
+                        System.out.println(prefix());
+                    }
+                }
 
                 // Wait for day to end
-                dayEndBarrier.await();
+                awaitBarrier(dayEndBarrier);
 
-            } catch (InterruptedException | BrokenBarrierException e) {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
+                return;
             }
         }
     }

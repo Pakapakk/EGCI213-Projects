@@ -1,13 +1,8 @@
 package Project2_6481328;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.BrokenBarrierException;
 
 /**
  *
@@ -18,121 +13,52 @@ import java.util.concurrent.CyclicBarrier;
  */
 public class Main {
 
+    public static final Object PRINT_LOCK = new Object();
+
     public static void main(String[] args) {
-        int days = 0;
-        int inboundNum = 0, inboundMax = 0;
-        int outboundNum = 0, outboundMax = 0;
-        int placeNum = 0;
-        int tourNum = 0, tourMin = 0, tourMax = 0;
-        int guideNum = 0;
+        Thread.currentThread().setName("main");
+        Main mainApp = new Main();
+        mainApp.runApp();
+    }
 
-        String basePath = "src/main/java/project2_6481328/";
-        String fileName = "config_1.txt";
-        BufferedReader reader = null;
-        Scanner scanner = new Scanner(System.in);
-
-        while (reader == null) {
-            try {
-                reader = new BufferedReader(new FileReader(basePath + fileName));
-            } catch (FileNotFoundException e) {
-                System.out.println(e);
-                System.out.println("New file name = ");
-                fileName = scanner.nextLine().trim();
-            }
-        }
-
+    private int awaitBarrier(CyclicBarrier barrier) {
         try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.startsWith("#") || line.isEmpty()) continue;
-
-                String[] parts = line.split(",");
-                for (int i = 0; i < parts.length; i++) {
-                    parts[i] = parts[i].trim();
-                }
-
-                switch (parts[0]) {
-                    case "days":
-                        days = Integer.parseInt(parts[1]);
-                        break;
-                    case "inbound_num_max":
-                        inboundNum = Integer.parseInt(parts[1]);
-                        inboundMax = Integer.parseInt(parts[2]);
-                        break;
-                    case "outbound_num_max":
-                        outboundNum = Integer.parseInt(parts[1]);
-                        outboundMax = Integer.parseInt(parts[2]);
-                        break;
-                    case "place_num":
-                        placeNum = Integer.parseInt(parts[1]);
-                        break;
-                    case "tour_num_min_max":
-                        tourNum = Integer.parseInt(parts[1]);
-                        tourMin = Integer.parseInt(parts[2]);
-                        tourMax = Integer.parseInt(parts[3]);
-                        break;
-                    case "guide_num":
-                        guideNum = Integer.parseInt(parts[1]);
-                        break;
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            System.out.println("Error reading config. Exiting.");
-            return;
+            return barrier.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (BrokenBarrierException e) {
+            throw new RuntimeException(e);
         }
+    }
 
-        ArrayList<CityLimo> cityLimos = new ArrayList<>();
-        for (int i = 0; i < inboundNum; i++) {
-            cityLimos.add(new CityLimo("CityLimo_" + i, inboundMax));
-        }
+    public void runApp() {
+        String basePath = "src/main/java/Project2_6481328/";
+        String fileName = "config_1.txt";
 
-        ArrayList<AirportLimo> airportLimos = new ArrayList<>();
-        for (int i = 0; i < outboundNum; i++) {
-            airportLimos.add(new AirportLimo("AirportLimo_" + i, outboundMax));
-        }
+        int[] config = Helper.readConfig(basePath, fileName);
 
-        ArrayList<Place> places = new ArrayList<>();
-        for (int i = 0; i < placeNum; i++) {
-            places.add(new Place("Place_" + i));
-        }
+        int days        = config[0];
+        int inboundNum  = config[1];
+        int inboundMax  = config[2];
+        int outboundNum = config[3];
+        int outboundMax = config[4];
+        int placeNum    = config[5];
+        int tourNum     = config[6];
+        int tourMin     = config[7];
+        int tourMax     = config[8];
+        int guideNum    = config[9];
 
-        int padWidth = "main".length();
-        for (int i = 0; i < tourNum; i++) {
-            padWidth = Math.max(padWidth, ("TourThread_" + i).length());
-        }
-        for (int i = 0; i < guideNum; i++) {
-            padWidth = Math.max(padWidth, ("GuideThread_" + i).length());
-        }
+        ArrayList<CityLimo> cityLimos = Helper.createCityLimos(inboundNum, inboundMax);
+        ArrayList<AirportLimo> airportLimos = Helper.createAirportLimos(outboundNum, outboundMax);
+        ArrayList<Place> places = Helper.createPlaces(placeNum);
 
-        String p = String.format("%" + padWidth + "s >> ", "main");
+        int padWidth = Helper.calculatePadWidth(tourNum, guideNum);
 
-        StringBuilder tourNames = new StringBuilder("[");
-        for (int i = 0; i < tourNum; i++) {
-            if (i > 0) tourNames.append(", ");
-            tourNames.append("TourThread_").append(i);
-        }
-        tourNames.append("]");
-
-        StringBuilder guideNames = new StringBuilder("[");
-        for (int i = 0; i < guideNum; i++) {
-            if (i > 0) guideNames.append(", ");
-            guideNames.append("GuideThread_").append(i);
-        }
-        guideNames.append("]");
-
-        // Print parameter summary
-        System.out.println(p + "====================== Parameters ======================");
-        System.out.println(p + "Days of simulation    : " + days);
-        System.out.println(p + "city limo services    : " + cityLimos);
-        System.out.println(p + "City limo capacity    : " + inboundMax + " per service");
-        System.out.println(p + "Airport limo services : " + airportLimos);
-        System.out.println(p + "Airport limo capacity : " + outboundMax + " per service");
-        System.out.println(p + "Places                : " + places);
-        System.out.println(p + "TourThreads           : " + tourNames);
-        System.out.println(p + "Daily arrival         : min = " + tourMin + ", max = " + tourMax);
-        System.out.println(p + "GuideThreads          : " + guideNames);
+        Helper.printParameters(
+                padWidth, days, cityLimos, inboundMax,
+                airportLimos, outboundMax, places, tourNum, tourMin, tourMax, guideNum
+        );
 
         // Create barriers
         int totalParties = tourNum + guideNum + 1; // +1 for main thread
@@ -148,19 +74,38 @@ public class Main {
         // Create GuideThreads
         ArrayList<GuideThread> guideThreads = new ArrayList<>();
         for (int i = 0; i < guideNum; i++) {
-            guideThreads.add(new GuideThread("GuideThread_" + i, days, places,
-                    dayStartBarrier, guideAssignDoneBarrier, guideReportBarrier,
-                    dayEndBarrier, padWidth));
+            guideThreads.add(new GuideThread(
+                    "GuideThread_" + i,
+                    days,
+                    places,
+                    dayStartBarrier,
+                    guideAssignDoneBarrier,
+                    guideReportBarrier,
+                    dayEndBarrier,
+                    padWidth
+            ));
         }
 
         // Create TourThreads
         ArrayList<TourThread> tourThreads = new ArrayList<>();
         for (int i = 0; i < tourNum; i++) {
-            tourThreads.add(new TourThread("TourThread_" + i, days, tourMin, tourMax,
-                    cityLimos, airportLimos, guideThreads,
-                    dayStartBarrier, outboundReportBarrier, afterOutboundBarrier,
-                    inboundArrivalBarrier, inboundLimoBarrier, guideAssignDoneBarrier,
-                    dayEndBarrier, padWidth));
+            tourThreads.add(new TourThread(
+                    "TourThread_" + i,
+                    days,
+                    tourMin,
+                    tourMax,
+                    cityLimos,
+                    airportLimos,
+                    guideThreads,
+                    dayStartBarrier,
+                    outboundReportBarrier,
+                    afterOutboundBarrier,
+                    inboundArrivalBarrier,
+                    inboundLimoBarrier,
+                    guideAssignDoneBarrier,
+                    dayEndBarrier,
+                    padWidth
+            ));
         }
 
         // Start all threads
@@ -173,48 +118,17 @@ public class Main {
 
         // Main thread day loop
         for (int day = 1; day <= days; day++) {
-            try {
-                System.out.println(p);
-                if (day > 0) {
-                    System.out.println(p + "=========================================================");
-                }
-                System.out.println(p + "Day " + day);
+            Helper.printDayHeaderAndReset(day, padWidth, cityLimos, airportLimos);
 
-                // Reset and print all limo seats
-                for (CityLimo limo : cityLimos) {
-                    limo.resetSeats();
-                    System.out.printf("%sreset %-14s remaining seats = %5d\n",
-                            p, limo.getName(), limo.getRemainingSeats());
-                }
-                for (AirportLimo limo : airportLimos) {
-                    limo.resetSeats();
-                    System.out.printf("%sreset %-14s remaining seats = %5d\n",
-                            p, limo.getName(), limo.getRemainingSeats());
-                }
-                System.out.println(p);
+            // Release all threads to start the day
+            awaitBarrier(dayStartBarrier);
 
-                // Release all threads to start the day
-                dayStartBarrier.await();
-
-                // Wait for all threads to finish the day
-                dayEndBarrier.await();
-
-            } catch (InterruptedException | BrokenBarrierException e) {
-                e.printStackTrace();
-            }
+            // Wait for all threads to finish the day
+            awaitBarrier(dayEndBarrier);
         }
 
-        for (TourThread tour : tourThreads) {
-            try { tour.join(); } catch (InterruptedException e) { e.printStackTrace(); }
-        }
-        for (GuideThread guide : guideThreads) {
-            try { guide.join(); } catch (InterruptedException e) { e.printStackTrace(); }
-        }
-
-        // Print summary
-        System.out.println(p);
-        System.out.println(p + "================================================");
-        System.out.println(p + "Summary");
+        Helper.joinTours(tourThreads);
+        Helper.joinGuides(guideThreads);
 
         guideThreads.sort((a, b) -> {
             int diff = b.getTotalCustomers() - a.getTotalCustomers();
@@ -222,9 +136,6 @@ public class Main {
             return a.getName().compareTo(b.getName());
         });
 
-        for (GuideThread guide : guideThreads) {
-            System.out.printf("%s%s\ttotal customers = %5d\n",
-                    p, guide.getName(), guide.getTotalCustomers());
-        }
+        Helper.printSummary(padWidth, guideThreads);
     }
 }

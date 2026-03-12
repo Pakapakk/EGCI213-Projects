@@ -28,9 +28,9 @@ public class GuideThread extends Thread {
     private Random random = new Random();
 
     public GuideThread(String name, int days, ArrayList<Place> places,
-            CyclicBarrier dayStartBarrier, CyclicBarrier guideAssignDoneBarrier,
-            CyclicBarrier guideReportBarrier, CyclicBarrier dayEndBarrier,
-            int padWidth) {
+                       CyclicBarrier dayStartBarrier, CyclicBarrier guideAssignDoneBarrier,
+                       CyclicBarrier guideReportBarrier, CyclicBarrier dayEndBarrier,
+                       int padWidth) {
         super(name);
         this.days = days;
         this.places = places;
@@ -54,20 +54,31 @@ public class GuideThread extends Thread {
         return totalCustomers;
     }
 
+    public static int awaitBarrier(CyclicBarrier barrier) {
+        try {
+            return barrier.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (BrokenBarrierException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public void run() {
         for (int day = 1; day <= days; day++) {
             try {
                 // Wait for main to print day header
-                dayStartBarrier.await();
+                awaitBarrier(dayStartBarrier);
 
                 // Wait for all TourThreads to finish sending customers
-                guideAssignDoneBarrier.await();
+                awaitBarrier(guideAssignDoneBarrier);
 
                 // Report today's customers
                 System.out.printf("%stotal customer today = %5d\n",
                         prefix(), todayCustomers);
-                guideReportBarrier.await();
+                awaitBarrier(guideReportBarrier);
 
                 // If has customers, visit a random place
                 if (todayCustomers > 0) {
@@ -81,10 +92,11 @@ public class GuideThread extends Thread {
                 todayCustomers = 0;
 
                 // Wait for day to end
-                dayEndBarrier.await();
+                awaitBarrier(dayEndBarrier);
 
-            } catch (InterruptedException | BrokenBarrierException e) {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
+                return;
             }
         }
     }
