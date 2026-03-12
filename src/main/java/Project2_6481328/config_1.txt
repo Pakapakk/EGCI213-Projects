@@ -1,0 +1,21 @@
+# First column in every parameter line = label
+#
+# Label followed by: days of simulation
+days,                  6
+#
+# Limousine services: inbound and outbound are in separate lines
+# Label followed by: number of services, service capacity
+inbound_num_max,       3, 100
+outbound_num_max,      2, 200
+#
+# Label followed by: number of places
+place_num,             3
+#
+# TourThreads
+# Label followed by: number of threads, min daily arrival, max daily arrival
+tour_num_min_max,      3, 50, 100
+#
+# LocalGuideThreads
+# Label followed by: number of threads
+guide_num,             4
+
