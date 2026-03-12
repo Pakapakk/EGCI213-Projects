@@ -42,7 +42,7 @@ public class GuideThread extends Thread {
     }
 
     private String prefix() {
-        return String.format("%" + padWidth + "s >> ", Thread.currentThread().getName());
+        return Helper.prefix(padWidth);
     }
 
     public synchronized void receiveCustomers(int customers) {

@@ -61,7 +61,7 @@ public class TourThread extends Thread {
     }
 
     private String prefix() {
-        return String.format("%" + padWidth + "s >> ", Thread.currentThread().getName());
+        return Helper.prefix(padWidth);
     }
 
     public static int awaitBarrier(CyclicBarrier barrier) {
